@@ -218,6 +218,94 @@ export class OAuthHandler {
     return parts[1];
   }
 
+  async handleTokenExchange(request: Request): Promise<Response> {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    const formData = await request.formData();
+    const grantType = formData.get('grant_type');
+    const code = formData.get('code') as string;
+    const codeVerifier = formData.get('code_verifier') as string;
+
+    if (grantType !== 'authorization_code') {
+      return new Response(JSON.stringify({
+        error: 'unsupported_grant_type',
+        error_description: 'Only authorization_code grant type is supported'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!code) {
+      return new Response(JSON.stringify({
+        error: 'invalid_request',
+        error_description: 'Missing authorization code'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Retrieve session from KV
+    const sessionData = await this.env.OAUTH_CODES.get(code);
+    if (!sessionData) {
+      return new Response(JSON.stringify({
+        error: 'invalid_grant',
+        error_description: 'Invalid or expired authorization code'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const session: OAuthSession = JSON.parse(sessionData);
+
+    // Verify code verifier if provided (PKCE)
+    if (codeVerifier && session.codeVerifier !== codeVerifier) {
+      return new Response(JSON.stringify({
+        error: 'invalid_grant',
+        error_description: 'Invalid code verifier'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Generate access token
+    const accessToken = crypto.randomUUID();
+    const tokenData: AccessToken = {
+      token: accessToken,
+      userId: `user_${code}`,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    };
+
+    // Store access token
+    await this.env.ACCESS_TOKENS.put(accessToken, JSON.stringify(tokenData), {
+      expirationTtl: 86400 // 24 hours
+    });
+
+    // Clean up used code
+    await this.env.OAUTH_CODES.delete(code);
+
+    // Return token response
+    return new Response(JSON.stringify({
+      access_token: accessToken,
+      token_type: 'Bearer',
+      expires_in: 86400,
+      scope: 'mcp'
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Pragma': 'no-cache'
+      }
+    });
+  }
+
   async showAuthPage(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');

@@ -46,11 +46,14 @@ export default {
         url.pathname === '/.well-known/mcp_oauth') {
       const baseUrl = 'https://mcp-cloudflare.amansk.workers.dev';
       return new Response(JSON.stringify({
+        issuer: baseUrl,
         authorization_endpoint: `${baseUrl}/oauth/authorize`,
         token_endpoint: `${baseUrl}/oauth/token`,
         device_authorization_endpoint: `${baseUrl}/oauth/device`,
-        supported_response_types: ['code'],
-        grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code']
+        response_types_supported: ['code'],
+        grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code'],
+        code_challenge_methods_supported: ['S256'],
+        token_endpoint_auth_methods_supported: ['none']
       }), {
         status: 200,
         headers: {
@@ -81,6 +84,10 @@ export default {
 
     if (url.pathname === '/oauth/callback') {
       return await oauthHandler.handleCallback(request);
+    }
+
+    if (url.pathname === '/oauth/token') {
+      return await oauthHandler.handleTokenExchange(request);
     }
 
     // MCP endpoints - route to Durable Object
