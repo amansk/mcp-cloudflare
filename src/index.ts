@@ -110,18 +110,36 @@ export default {
       });
     }
 
+    // Manifest endpoint for Claude Desktop remote connector
+    if (url.pathname === '/' || url.pathname === '/manifest') {
+      return new Response(JSON.stringify({
+        url: 'https://mcp-cloudflare.amansk.workers.dev/mcp',
+        transport: {
+          type: 'sse'
+        },
+        oauth: {
+          authorizeUrl: 'https://mcp-cloudflare.amansk.workers.dev/oauth/authorize'
+        }
+      }), {
+        status: 200,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     // Default response
     return new Response(JSON.stringify({
       name: 'MCP Cloudflare Server',
       version: '1.0.0',
       endpoints: {
         oauth: {
-          initiate: '/oauth/initiate',
+          authorize: '/oauth/authorize',
           callback: '/oauth/callback'
         },
         mcp: {
-          sse: '/mcp',
-          alternate: '/sse'
+          sse: '/mcp'
         },
         health: '/health'
       }
