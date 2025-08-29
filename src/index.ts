@@ -41,6 +41,25 @@ export default {
       });
     }
 
+    // OAuth discovery endpoints (like Torch)
+    if (url.pathname === '/.well-known/oauth-authorization-server' || 
+        url.pathname === '/.well-known/mcp_oauth') {
+      const baseUrl = 'https://mcp-cloudflare.amansk.workers.dev';
+      return new Response(JSON.stringify({
+        authorization_endpoint: `${baseUrl}/oauth/authorize`,
+        token_endpoint: `${baseUrl}/oauth/token`,
+        device_authorization_endpoint: `${baseUrl}/oauth/device`,
+        supported_response_types: ['code'],
+        grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code']
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     // OAuth endpoints
     if (url.pathname === '/oauth/authorize') {
       // This is what Claude Desktop calls
@@ -110,23 +129,27 @@ export default {
       });
     }
 
-    // Manifest endpoint for Claude Desktop remote connector
-    if (url.pathname === '/' || url.pathname === '/manifest') {
-      return new Response(JSON.stringify({
-        url: 'https://mcp-cloudflare.amansk.workers.dev/mcp',
-        transport: {
-          type: 'sse'
-        },
-        oauth: {
-          authorizeUrl: 'https://mcp-cloudflare.amansk.workers.dev/oauth/authorize'
-        }
-      }), {
-        status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
+    // Root endpoint - check for token, return OAuth error if missing (like Torch)
+    if (url.pathname === '/') {
+      const token = oauthHandler.extractToken(request);
+      
+      if (!token) {
+        // Return OAuth error with WWW-Authenticate header (like Torch)
+        return new Response(JSON.stringify({
+          error: 'invalid_token',
+          error_description: 'Missing or invalid bearer token'
+        }), {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': 'Bearer realm="https://mcp-cloudflare.amansk.workers.dev", error="invalid_token", error_description="Missing or invalid bearer token"',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+      
+      // If token present, redirect to /mcp
+      return Response.redirect(new URL('/mcp', request.url).toString(), 302);
     }
 
     // Default response
