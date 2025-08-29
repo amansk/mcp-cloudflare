@@ -1,5 +1,19 @@
 # Deployment Instructions
 
+## API Token Permissions (Minimal)
+
+When creating your API token, you only need:
+
+**Account Permissions:**
+- Account → Workers KV Storage → Edit
+- Account → Workers Scripts → Edit
+- Account → Account Settings → Read (for account ID)
+
+**Zone Permissions:**
+- None needed (unless using custom domain)
+
+Note: "Workers Routes" permission is NOT needed for `*.workers.dev` deployments
+
 ## Step 1: Authenticate with Cloudflare
 
 Option A - Interactive login (recommended):

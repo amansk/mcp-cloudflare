@@ -17,11 +17,11 @@ new_sqlite_classes = ["MCPServerDO"]
 # KV Namespaces for OAuth
 [[kv_namespaces]]
 binding = "OAUTH_CODES"
-id = "oauth_codes_namespace"
+id = "166ceb0e817f44679b0869ab60a0c89f"
 
 [[kv_namespaces]]
 binding = "ACCESS_TOKENS"
-id = "access_tokens_namespace"
+id = "166ceb0e817f44679b0869ab60a0c89f"
 
 # Environment variables
 [vars]
