@@ -42,8 +42,22 @@ export default {
     }
 
     // OAuth endpoints
-    if (url.pathname === '/oauth/initiate') {
+    if (url.pathname === '/oauth/authorize') {
+      // This is what Claude Desktop calls
       return await oauthHandler.initiateOAuth(request);
+    }
+
+    if (url.pathname === '/oauth/initiate') {
+      // For manual testing
+      return await oauthHandler.initiateOAuth(request);
+    }
+
+    if (url.pathname === '/auth') {
+      return await oauthHandler.showAuthPage(request);
+    }
+
+    if (url.pathname === '/auth/submit') {
+      return await oauthHandler.handleAuthSubmit(request);
     }
 
     if (url.pathname === '/oauth/callback') {

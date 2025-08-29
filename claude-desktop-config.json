@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "mcp-cloudflare": {
+      "url": "https://mcp-cloudflare.amansk.workers.dev/mcp",
+      "transport": {
+        "type": "sse"
+      },
+      "oauth": {
+        "authorizeUrl": "https://mcp-cloudflare.amansk.workers.dev/oauth/authorize"
+      }
+    }
+  }
+}
