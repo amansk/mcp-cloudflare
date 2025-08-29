@@ -22,8 +22,9 @@ export default {
         status: 204,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'true',
           'Access-Control-Max-Age': '86400'
         }
       });
@@ -41,20 +42,16 @@ export default {
       });
     }
 
-    // OAuth discovery endpoints (like Torch)
+    // OAuth discovery endpoints (exactly like original prototype)
     if (url.pathname === '/.well-known/oauth-authorization-server' || 
         url.pathname === '/.well-known/mcp_oauth') {
       const baseUrl = 'https://mcp-cloudflare.amansk.workers.dev';
       return new Response(JSON.stringify({
-        issuer: baseUrl,
         authorization_endpoint: `${baseUrl}/oauth/authorize`,
         token_endpoint: `${baseUrl}/oauth/token`,
         device_authorization_endpoint: `${baseUrl}/oauth/device`,
-        registration_endpoint: `${baseUrl}/oauth/register`,
-        response_types_supported: ['code'],
-        grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code'],
-        code_challenge_methods_supported: ['S256'],
-        token_endpoint_auth_methods_supported: ['none']
+        supported_response_types: ['code'],
+        grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code']
       }), {
         status: 200,
         headers: {
@@ -91,9 +88,6 @@ export default {
       return await oauthHandler.handleTokenExchange(request);
     }
 
-    if (url.pathname === '/oauth/register') {
-      return await oauthHandler.handleClientRegistration(request);
-    }
 
     // MCP endpoints - route to Durable Object
     if (url.pathname === '/mcp' || url.pathname === '/sse') {
