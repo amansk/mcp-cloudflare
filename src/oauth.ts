@@ -262,6 +262,17 @@ export class OAuthHandler {
 
     const session: OAuthSession = JSON.parse(sessionData);
 
+    // Check if code was authorized
+    if (!session.authorized) {
+      return new Response(JSON.stringify({
+        error: 'invalid_grant',
+        error_description: 'Authorization code not yet authorized'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     // Verify code verifier if provided (PKCE)
     if (codeVerifier && session.codeVerifier !== codeVerifier) {
       return new Response(JSON.stringify({
@@ -420,28 +431,17 @@ export class OAuthHandler {
       return new Response('State mismatch', { status: 400 });
     }
 
-    // Generate access token
-    const accessToken = crypto.randomUUID();
-    const tokenData: AccessToken = {
-      token: accessToken,
-      userId: `user_${code}`,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-    };
-
-    // Store access token
-    await this.env.ACCESS_TOKENS.put(accessToken, JSON.stringify(tokenData), {
-      expirationTtl: 86400 // 24 hours
+    // Don't delete the code yet - it needs to be exchanged for a token
+    // Just mark it as authorized by updating it
+    session.authorized = true;
+    await this.env.OAUTH_CODES.put(code, JSON.stringify(session), {
+      expirationTtl: 300 // Keep for 5 more minutes
     });
 
-    // Clean up used code
-    await this.env.OAUTH_CODES.delete(code);
-
-    // If we have a redirect URI, redirect back with the token
+    // If we have a redirect URI, redirect back with the authorization CODE (not token)
     if (redirectUri) {
       const callbackUrl = new URL(redirectUri);
-      callbackUrl.searchParams.set('access_token', accessToken);
-      callbackUrl.searchParams.set('token_type', 'Bearer');
+      callbackUrl.searchParams.set('code', code);  // Return the authorization code
       callbackUrl.searchParams.set('state', state);
       return Response.redirect(callbackUrl.toString(), 302);
     }

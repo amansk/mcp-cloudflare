@@ -5,6 +5,7 @@ export interface OAuthSession {
   codeVerifier: string;
   createdAt: number;
   expiresAt: number;
+  authorized?: boolean;
 }
 
 export interface AccessToken {
