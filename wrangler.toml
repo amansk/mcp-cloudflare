@@ -1,4 +1,4 @@
-name = "mcp-cloudflare"
+name = "mcp"
 main = "src/index.ts"
 compatibility_date = "2024-08-19"
 compatibility_flags = ["nodejs_compat"]
