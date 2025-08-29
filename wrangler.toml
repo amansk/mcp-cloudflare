@@ -1,0 +1,31 @@
+name = "mcp-cloudflare"
+main = "src/index.ts"
+compatibility_date = "2024-08-19"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Objects binding
+[durable_objects]
+bindings = [
+  { name = "MCP_SERVER", class_name = "MCPServerDO" }
+]
+
+# Durable Objects migration
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MCPServerDO"]
+
+# KV Namespaces for OAuth
+[[kv_namespaces]]
+binding = "OAUTH_CODES"
+id = "oauth_codes_namespace"
+preview_id = "oauth_codes_preview"
+
+[[kv_namespaces]]
+binding = "ACCESS_TOKENS"
+id = "access_tokens_namespace"
+preview_id = "access_tokens_preview"
+
+# Environment variables
+[vars]
+FIXED_API_KEY = "htr_sk_test_cloudflare_001"
+ENVIRONMENT = "development"
