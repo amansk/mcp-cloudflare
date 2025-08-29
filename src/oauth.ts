@@ -218,6 +218,34 @@ export class OAuthHandler {
     return parts[1];
   }
 
+  async handleClientRegistration(request: Request): Promise<Response> {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    const body = await request.json();
+    
+    // Generate a client ID (we don't actually validate it since we use WLVY codes)
+    const clientId = crypto.randomUUID();
+    
+    // Return registration response
+    return new Response(JSON.stringify({
+      client_id: clientId,
+      client_id_issued_at: Math.floor(Date.now() / 1000),
+      grant_types: ['authorization_code'],
+      response_types: ['code'],
+      redirect_uris: body.redirect_uris || ['http://localhost:8080/callback'],
+      token_endpoint_auth_method: 'none'
+    }), {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Pragma': 'no-cache'
+      }
+    });
+  }
+
   async handleTokenExchange(request: Request): Promise<Response> {
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405 });

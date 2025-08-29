@@ -50,6 +50,7 @@ export default {
         authorization_endpoint: `${baseUrl}/oauth/authorize`,
         token_endpoint: `${baseUrl}/oauth/token`,
         device_authorization_endpoint: `${baseUrl}/oauth/device`,
+        registration_endpoint: `${baseUrl}/oauth/register`,
         response_types_supported: ['code'],
         grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code'],
         code_challenge_methods_supported: ['S256'],
@@ -88,6 +89,10 @@ export default {
 
     if (url.pathname === '/oauth/token') {
       return await oauthHandler.handleTokenExchange(request);
+    }
+
+    if (url.pathname === '/oauth/register') {
+      return await oauthHandler.handleClientRegistration(request);
     }
 
     // MCP endpoints - route to Durable Object
