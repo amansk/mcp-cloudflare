@@ -42,16 +42,18 @@ export default {
       });
     }
 
-    // OAuth discovery endpoints (exactly like original prototype)
+    // OAuth discovery endpoints
     if (url.pathname === '/.well-known/oauth-authorization-server' || 
         url.pathname === '/.well-known/mcp_oauth') {
       const baseUrl = 'https://mcp-cloudflare.amansk.workers.dev';
       return new Response(JSON.stringify({
+        issuer: baseUrl,  // MCP Inspector requires this
         authorization_endpoint: `${baseUrl}/oauth/authorize`,
         token_endpoint: `${baseUrl}/oauth/token`,
-        device_authorization_endpoint: `${baseUrl}/oauth/device`,
-        supported_response_types: ['code'],
-        grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code']
+        registration_endpoint: `${baseUrl}/oauth/register`,  // MCP Inspector requires this
+        response_types_supported: ['code'],  // MCP Inspector requires this exact field name
+        grant_types_supported: ['authorization_code'],
+        token_endpoint_auth_methods_supported: ['none']
       }), {
         status: 200,
         headers: {
@@ -86,6 +88,24 @@ export default {
 
     if (url.pathname === '/oauth/token') {
       return await oauthHandler.handleTokenExchange(request);
+    }
+
+    // Simple client registration for MCP Inspector
+    if (url.pathname === '/oauth/register') {
+      const clientId = crypto.randomUUID();
+      return new Response(JSON.stringify({
+        client_id: clientId,
+        client_id_issued_at: Math.floor(Date.now() / 1000),
+        grant_types: ['authorization_code'],
+        response_types: ['code'],
+        token_endpoint_auth_method: 'none'
+      }), {
+        status: 201,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
     }
 
 
